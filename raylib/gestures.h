@@ -1,6 +1,6 @@
 /**********************************************************************************************
 *
-*   raylib Gestures System - Gestures Processing based on input gesture events (touch/mouse)
+*   raylib.gestures - Gestures system, gestures processing based on input events (touch/mouse)
 *
 *   NOTE: Memory footprint of this library is aproximately 128 bytes (global variables)
 *
@@ -24,7 +24,7 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2014-2016 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2014-2018 Ramon Santamaria (@raysan5)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -140,16 +140,25 @@ float GetGesturePinchAngle(void);                       // Get gesture pinch ang
 
 #if defined(GESTURES_IMPLEMENTATION)
 
-#include <math.h>               // Required for: atan2(), sqrt()
-#include <stdint.h>             // Required for: uint64_t
-
 #if defined(_WIN32)
     // Functions required to query time on Windows
     int __stdcall QueryPerformanceCounter(unsigned long long int *lpPerformanceCount);
     int __stdcall QueryPerformanceFrequency(unsigned long long int *lpFrequency);
-#elif defined(__linux)
-    #include <sys/time.h>       // Required for: timespec
-    #include <time.h>           // Required for: clock_gettime()
+#elif defined(__linux__)
+    #if _POSIX_C_SOURCE < 199309L
+        #undef _POSIX_C_SOURCE
+        #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
+    #endif
+    #include <sys/time.h>           // Required for: timespec
+    #include <time.h>               // Required for: clock_gettime()
+
+    #include <math.h>               // Required for: atan2(), sqrt()
+    #include <stdint.h>             // Required for: uint64_t
+#endif
+
+#if defined(__APPLE__)              // macOS also defines __MACH__
+    #include <mach/clock.h>         // Required for: clock_get_time()
+    #include <mach/mach.h>          // Required for: mach_timespec_t
 #endif
 
 //----------------------------------------------------------------------------------
@@ -213,8 +222,11 @@ static unsigned int enabledGestures = 0b0000001111111111;
 //----------------------------------------------------------------------------------
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
+#if defined(GESTURES_STANDALONE)
+// Some required math functions provided by raymath.h
 static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition);
 static float Vector2Distance(Vector2 v1, Vector2 v2);
+#endif
 static double GetCurrentTime(void);
 
 //----------------------------------------------------------------------------------
@@ -477,13 +489,11 @@ float GetGesturePinchAngle(void)
 //----------------------------------------------------------------------------------
 // Module specific Functions Definition
 //----------------------------------------------------------------------------------
-
+#if defined(GESTURES_STANDALONE)
 // Returns angle from two-points vector with X-axis
-static float Vector2Angle(Vector2 initialPosition, Vector2 finalPosition)
+static float Vector2Angle(Vector2 v1, Vector2 v2)
 {
-    float angle;
-
-    angle = atan2f(finalPosition.y - initialPosition.y, finalPosition.x - initialPosition.x)*(180.0f/PI);
+    float angle = angle = atan2f(v2.y - v1.y, v2.x - v1.x)*(180.0f/PI);
     
     if (angle < 0) angle += 360.0f;
 
@@ -502,6 +512,7 @@ static float Vector2Distance(Vector2 v1, Vector2 v2)
 
     return result;
 }
+#endif
 
 // Time measure returned are milliseconds
 static double GetCurrentTime(void)
@@ -511,19 +522,35 @@ static double GetCurrentTime(void)
 #if defined(_WIN32)
     unsigned long long int clockFrequency, currentTime;
     
-    QueryPerformanceFrequency(&clockFrequency);
+    QueryPerformanceFrequency(&clockFrequency);     // BE CAREFUL: Costly operation!
     QueryPerformanceCounter(&currentTime);
     
     time = (double)currentTime/clockFrequency*1000.0f;  // Time in miliseconds
 #endif
 
-#if defined(__linux)
+#if defined(__linux__)
     // NOTE: Only for Linux-based systems
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time in nanoseconds
     
     time = ((double)nowTime/1000000.0);     // Time in miliseconds
+#endif
+
+#if defined(__APPLE__)
+    //#define CLOCK_REALTIME  CALENDAR_CLOCK    // returns UTC time since 1970-01-01
+    //#define CLOCK_MONOTONIC SYSTEM_CLOCK      // returns the time since boot time
+    
+    clock_serv_t cclock;
+    mach_timespec_t now;
+    host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+    
+    // NOTE: OS X does not have clock_gettime(), using clock_get_time()
+    clock_get_time(cclock, &now);
+    mach_port_deallocate(mach_task_self(), cclock);
+    uint64_t nowTime = (uint64_t)now.tv_sec*1000000000LLU + (uint64_t)now.tv_nsec;     // Time in nanoseconds
+
+    time = ((double)nowTime/1000000.0);     // Time in miliseconds    
 #endif
 
     return time;

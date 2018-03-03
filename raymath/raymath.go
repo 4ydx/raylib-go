@@ -1,4 +1,4 @@
-// Package raymath - Some useful functions to work with Vector3, Matrix and Quaternions
+// Package raymath - Some useful functions to work with Vector2, Vector3, Matrix and Quaternions
 package raymath
 
 import (
@@ -7,30 +7,163 @@ import (
 	"github.com/gen2brain/raylib-go/raylib"
 )
 
-// VectorAdd - Add two vectors
-func VectorAdd(v1, v2 raylib.Vector3) raylib.Vector3 {
+// Vector2Zero - Vector with components value 0.0
+func Vector2Zero() raylib.Vector2 {
+	return raylib.NewVector2(0.0, 0.0)
+}
+
+// Vector2One - Vector with components value 1.0
+func Vector2One() raylib.Vector2 {
+	return raylib.NewVector2(1.0, 1.0)
+}
+
+// Vector2Add - Add two vectors (v1 + v2)
+func Vector2Add(v1, v2 raylib.Vector2) raylib.Vector2 {
+	return raylib.NewVector2(v1.X+v2.X, v1.Y+v2.Y)
+}
+
+// Vector2Subtract - Subtract two vectors (v1 - v2)
+func Vector2Subtract(v1, v2 raylib.Vector2) raylib.Vector2 {
+	return raylib.NewVector2(v1.X-v2.X, v1.Y-v2.Y)
+}
+
+// Vector2Length - Calculate vector length
+func Vector2Length(v raylib.Vector2) float32 {
+	return float32(math.Sqrt(float64((v.X * v.X) + (v.Y * v.Y))))
+}
+
+// Vector2DotProduct - Calculate two vectors dot product
+func Vector2DotProduct(v1, v2 raylib.Vector2) float32 {
+	return (v1.X*v2.X + v1.Y*v2.Y)
+}
+
+// Vector2Distance - Calculate distance between two vectors
+func Vector2Distance(v1, v2 raylib.Vector2) float32 {
+	return float32(math.Sqrt(float64((v1.X-v2.X)*(v1.X-v2.X) + (v1.Y-v2.Y)*(v1.Y-v2.Y))))
+}
+
+// Vector2Angle - Calculate angle between two vectors in X-axis
+func Vector2Angle(v1, v2 raylib.Vector2) float32 {
+	angle := float32(math.Atan2(float64(v2.Y-v1.Y), float64(v2.X-v1.X)) * (180.0 / float64(raylib.Pi)))
+
+	if angle < 0 {
+		angle += 360.0
+	}
+
+	return angle
+}
+
+// Vector2Scale - Scale vector (multiply by value)
+func Vector2Scale(v *raylib.Vector2, scale float32) {
+	v.X *= scale
+	v.Y *= scale
+}
+
+// Vector2Negate - Negate vector
+func Vector2Negate(v *raylib.Vector2) {
+	v.X = -v.X
+	v.Y = -v.Y
+}
+
+// Vector2Divide - Divide vector by a float value
+func Vector2Divide(v *raylib.Vector2, div float32) {
+	v.X = v.X / div
+	v.Y = v.Y / div
+}
+
+// Vector2Normalize - Normalize provided vector
+func Vector2Normalize(v *raylib.Vector2) {
+	Vector2Divide(v, Vector2Length(*v))
+}
+
+// Vector2CrossProduct - Calculate two vectors cross product
+func Vector2CrossProduct(v1, v2 raylib.Vector2) float32 {
+	return v1.X*v2.Y - v1.Y*v2.X
+}
+
+// Vector2Cross - Calculate the cross product of a vector and a value
+func Vector2Cross(value float32, vector raylib.Vector2) raylib.Vector2 {
+	return raylib.NewVector2(-value*vector.Y, value*vector.X)
+}
+
+// Vector2LenSqr - Returns the len square root of a vector
+func Vector2LenSqr(vector raylib.Vector2) float32 {
+	return vector.X*vector.X + vector.Y*vector.Y
+}
+
+// Mat2Radians - Creates a matrix 2x2 from a given radians value
+func Mat2Radians(radians float32) raylib.Mat2 {
+	c := float32(math.Cos(float64(radians)))
+	s := float32(math.Sin(float64(radians)))
+
+	return raylib.NewMat2(c, -s, s, c)
+}
+
+// Mat2Set - Set values from radians to a created matrix 2x2
+func Mat2Set(matrix *raylib.Mat2, radians float32) {
+	cos := float32(math.Cos(float64(radians)))
+	sin := float32(math.Sin(float64(radians)))
+
+	matrix.M00 = cos
+	matrix.M01 = -sin
+	matrix.M10 = sin
+	matrix.M11 = cos
+}
+
+// Mat2Transpose - Returns the transpose of a given matrix 2x2
+func Mat2Transpose(matrix raylib.Mat2) raylib.Mat2 {
+	return raylib.NewMat2(matrix.M00, matrix.M10, matrix.M01, matrix.M11)
+}
+
+// Mat2MultiplyVector2 - Multiplies a vector by a matrix 2x2
+func Mat2MultiplyVector2(matrix raylib.Mat2, vector raylib.Vector2) raylib.Vector2 {
+	return raylib.NewVector2(matrix.M00*vector.X+matrix.M01*vector.Y, matrix.M10*vector.X+matrix.M11*vector.Y)
+}
+
+// Vector3Zero - Vector with components value 0.0
+func Vector3Zero() raylib.Vector3 {
+	return raylib.NewVector3(0.0, 0.0, 0.0)
+}
+
+// Vector3One - Vector with components value 1.0
+func Vector3One() raylib.Vector3 {
+	return raylib.NewVector3(1.0, 1.0, 1.0)
+}
+
+// Vector3Add - Add two vectors
+func Vector3Add(v1, v2 raylib.Vector3) raylib.Vector3 {
+	return raylib.NewVector3(v1.X+v2.X, v1.Y+v2.Y, v1.Z+v2.Z)
+}
+
+// Vector3Multiply - Multiply vector by scalar
+func Vector3Multiply(v raylib.Vector3, scalar float32) raylib.Vector3 {
 	result := raylib.Vector3{}
 
-	result.X = v1.X + v2.X
-	result.Y = v1.Y + v2.Y
-	result.Z = v1.Z + v2.Z
+	result.X = v.X * scalar
+	result.Y = v.Y * scalar
+	result.Z = v.Z * scalar
 
 	return result
 }
 
-// VectorSubtract - Subtract two vectors
-func VectorSubtract(v1, v2 raylib.Vector3) raylib.Vector3 {
+// Vector3MultiplyV - Multiply vector by vector
+func Vector3MultiplyV(v1, v2 raylib.Vector3) raylib.Vector3 {
 	result := raylib.Vector3{}
 
-	result.X = v1.X - v2.X
-	result.Y = v1.Y - v2.Y
-	result.Z = v1.Z - v2.Z
+	result.X = v1.X * v2.X
+	result.Y = v1.Y * v2.Y
+	result.Z = v1.Z * v2.Z
 
 	return result
 }
 
-// VectorCrossProduct - Calculate two vectors cross product
-func VectorCrossProduct(v1, v2 raylib.Vector3) raylib.Vector3 {
+// Vector3Subtract - Subtract two vectors
+func Vector3Subtract(v1, v2 raylib.Vector3) raylib.Vector3 {
+	return raylib.NewVector3(v1.X-v2.X, v1.Y-v2.Y, v1.Z-v2.Z)
+}
+
+// Vector3CrossProduct - Calculate two vectors cross product
+func Vector3CrossProduct(v1, v2 raylib.Vector3) raylib.Vector3 {
 	result := raylib.Vector3{}
 
 	result.X = v1.Y*v2.Z - v1.Z*v2.Y
@@ -40,8 +173,8 @@ func VectorCrossProduct(v1, v2 raylib.Vector3) raylib.Vector3 {
 	return result
 }
 
-// VectorPerpendicular - Calculate one vector perpendicular vector
-func VectorPerpendicular(v raylib.Vector3) raylib.Vector3 {
+// Vector3Perpendicular - Calculate one vector perpendicular vector
+func Vector3Perpendicular(v raylib.Vector3) raylib.Vector3 {
 	result := raylib.Vector3{}
 
 	min := math.Abs(float64(v.X))
@@ -56,40 +189,49 @@ func VectorPerpendicular(v raylib.Vector3) raylib.Vector3 {
 		cardinalAxis = raylib.NewVector3(0.0, 0.0, 1.0)
 	}
 
-	result = VectorCrossProduct(v, cardinalAxis)
+	result = Vector3CrossProduct(v, cardinalAxis)
 
 	return result
 }
 
-// VectorDotProduct - Calculate two vectors dot product
-func VectorDotProduct(v1, v2 raylib.Vector3) float32 {
-	return v1.X*v2.X + v1.Y*v2.Y + v1.Z*v2.Z
-}
-
-// VectorLength - Calculate vector length
-func VectorLength(v raylib.Vector3) float32 {
+// Vector3Length - Calculate vector length
+func Vector3Length(v raylib.Vector3) float32 {
 	return float32(math.Sqrt(float64(v.X*v.X + v.Y*v.Y + v.Z*v.Z)))
 }
 
-// VectorScale - Scale provided vector
-func VectorScale(v *raylib.Vector3, scale float32) {
+// Vector3DotProduct - Calculate two vectors dot product
+func Vector3DotProduct(v1, v2 raylib.Vector3) float32 {
+	return v1.X*v2.X + v1.Y*v2.Y + v1.Z*v2.Z
+}
+
+// Vector3Distance - Calculate distance between two vectors
+func Vector3Distance(v1, v2 raylib.Vector3) float32 {
+	dx := v2.X - v1.X
+	dy := v2.Y - v1.Y
+	dz := v2.Z - v1.Z
+
+	return float32(math.Sqrt(float64(dx*dx + dy*dy + dz*dz)))
+}
+
+// Vector3Scale - Scale provided vector
+func Vector3Scale(v *raylib.Vector3, scale float32) {
 	v.X *= scale
 	v.Y *= scale
 	v.Z *= scale
 }
 
-// VectorNegate - Negate provided vector (invert direction)
-func VectorNegate(v *raylib.Vector3) {
+// Vector3Negate - Negate provided vector (invert direction)
+func Vector3Negate(v *raylib.Vector3) {
 	v.X = -v.X
 	v.Y = -v.Y
 	v.Z = -v.Z
 }
 
-// VectorNormalize - Normalize provided vector
-func VectorNormalize(v *raylib.Vector3) {
+// Vector3Normalize - Normalize provided vector
+func Vector3Normalize(v *raylib.Vector3) {
 	var length, ilength float32
 
-	length = VectorLength(*v)
+	length = Vector3Length(*v)
 
 	if length == 0 {
 		length = 1.0
@@ -102,49 +244,8 @@ func VectorNormalize(v *raylib.Vector3) {
 	v.Z *= ilength
 }
 
-// VectorDistance - Calculate distance between two points
-func VectorDistance(v1, v2 raylib.Vector3) float32 {
-	var result float32
-
-	dx := v2.X - v1.X
-	dy := v2.Y - v1.Y
-	dz := v2.Z - v1.Z
-
-	result = float32(math.Sqrt(float64(dx*dx + dy*dy + dz*dz)))
-
-	return result
-}
-
-// VectorLerp - Calculate linear interpolation between two vectors
-func VectorLerp(v1, v2 raylib.Vector3, amount float32) raylib.Vector3 {
-	result := raylib.Vector3{}
-
-	result.X = v1.X + amount*(v2.X-v1.X)
-	result.Y = v1.Y + amount*(v2.Y-v1.Y)
-	result.Z = v1.Z + amount*(v2.Z-v1.Z)
-
-	return result
-}
-
-// VectorReflect - Calculate reflected vector to normal
-func VectorReflect(vector, normal raylib.Vector3) raylib.Vector3 {
-	// I is the original vector
-	// N is the normal of the incident plane
-	// R = I - (2*N*( DotProduct[ I,N] ))
-
-	result := raylib.Vector3{}
-
-	dotProduct := VectorDotProduct(vector, normal)
-
-	result.X = vector.X - (2.0*normal.X)*dotProduct
-	result.Y = vector.Y - (2.0*normal.Y)*dotProduct
-	result.Z = vector.Z - (2.0*normal.Z)*dotProduct
-
-	return result
-}
-
-// VectorTransform - Transforms a Vector3 by a given Matrix
-func VectorTransform(v *raylib.Vector3, mat raylib.Matrix) {
+// Vector3Transform - Transforms a Vector3 by a given Matrix
+func Vector3Transform(v *raylib.Vector3, mat raylib.Matrix) {
 	x := v.X
 	y := v.Y
 	z := v.Z
@@ -154,13 +255,36 @@ func VectorTransform(v *raylib.Vector3, mat raylib.Matrix) {
 	v.Z = mat.M2*x + mat.M6*y + mat.M10*z + mat.M14
 }
 
-// VectorZero - Return a Vector3 init to zero
-func VectorZero() raylib.Vector3 {
-	return raylib.NewVector3(0.0, 0.0, 0.0)
+// Vector3Lerp - Calculate linear interpolation between two vectors
+func Vector3Lerp(v1, v2 raylib.Vector3, amount float32) raylib.Vector3 {
+	result := raylib.Vector3{}
+
+	result.X = v1.X + amount*(v2.X-v1.X)
+	result.Y = v1.Y + amount*(v2.Y-v1.Y)
+	result.Z = v1.Z + amount*(v2.Z-v1.Z)
+
+	return result
 }
 
-// VectorMin - Return min value for each pair of components
-func VectorMin(vec1, vec2 raylib.Vector3) raylib.Vector3 {
+// Vector3Reflect - Calculate reflected vector to normal
+func Vector3Reflect(vector, normal raylib.Vector3) raylib.Vector3 {
+	// I is the original vector
+	// N is the normal of the incident plane
+	// R = I - (2*N*( DotProduct[ I,N] ))
+
+	result := raylib.Vector3{}
+
+	dotProduct := Vector3DotProduct(vector, normal)
+
+	result.X = vector.X - (2.0*normal.X)*dotProduct
+	result.Y = vector.Y - (2.0*normal.Y)*dotProduct
+	result.Z = vector.Z - (2.0*normal.Z)*dotProduct
+
+	return result
+}
+
+// Vector3Min - Return min value for each pair of components
+func Vector3Min(vec1, vec2 raylib.Vector3) raylib.Vector3 {
 	result := raylib.Vector3{}
 
 	result.X = float32(math.Min(float64(vec1.X), float64(vec2.X)))
@@ -170,13 +294,35 @@ func VectorMin(vec1, vec2 raylib.Vector3) raylib.Vector3 {
 	return result
 }
 
-// VectorMax - Return max value for each pair of components
-func VectorMax(vec1, vec2 raylib.Vector3) raylib.Vector3 {
+// Vector3Max - Return max value for each pair of components
+func Vector3Max(vec1, vec2 raylib.Vector3) raylib.Vector3 {
 	result := raylib.Vector3{}
 
 	result.X = float32(math.Max(float64(vec1.X), float64(vec2.X)))
 	result.Y = float32(math.Max(float64(vec1.Y), float64(vec2.Y)))
 	result.Z = float32(math.Max(float64(vec1.Z), float64(vec2.Z)))
+
+	return result
+}
+
+// Vector3Barycenter - Barycenter coords for p in triangle abc
+func Vector3Barycenter(p, a, b, c raylib.Vector3) raylib.Vector3 {
+	v0 := Vector3Subtract(b, a)
+	v1 := Vector3Subtract(c, a)
+	v2 := Vector3Subtract(p, a)
+	d00 := Vector3DotProduct(v0, v0)
+	d01 := Vector3DotProduct(v0, v1)
+	d11 := Vector3DotProduct(v1, v1)
+	d20 := Vector3DotProduct(v2, v0)
+	d21 := Vector3DotProduct(v2, v1)
+
+	denom := d00*d11 - d01*d01
+
+	result := raylib.Vector3{}
+
+	result.Y = (d11*d20 - d01*d21) / denom
+	result.Z = (d00*d21 - d01*d20) / denom
+	result.X = 1.0 - (result.Z + result.Y)
 
 	return result
 }
@@ -606,12 +752,12 @@ func MatrixOrtho(left, right, bottom, top, near, far float32) raylib.Matrix {
 func MatrixLookAt(eye, target, up raylib.Vector3) raylib.Matrix {
 	var result raylib.Matrix
 
-	z := VectorSubtract(eye, target)
-	VectorNormalize(&z)
-	x := VectorCrossProduct(up, z)
-	VectorNormalize(&x)
-	y := VectorCrossProduct(z, x)
-	VectorNormalize(&y)
+	z := Vector3Subtract(eye, target)
+	Vector3Normalize(&z)
+	x := Vector3CrossProduct(up, z)
+	Vector3Normalize(&x)
+	y := Vector3CrossProduct(z, x)
+	Vector3Normalize(&y)
 
 	result.M0 = x.X
 	result.M1 = x.Y
@@ -821,11 +967,11 @@ func QuaternionToMatrix(q raylib.Quaternion) raylib.Matrix {
 func QuaternionFromAxisAngle(axis raylib.Vector3, angle float32) raylib.Quaternion {
 	result := raylib.NewQuaternion(0.0, 0.0, 0.0, 1.0)
 
-	if VectorLength(axis) != 0.0 {
+	if Vector3Length(axis) != 0.0 {
 		angle *= 0.5
 	}
 
-	VectorNormalize(&axis)
+	Vector3Normalize(&axis)
 
 	sinres := float32(math.Sin(float64(angle)))
 	cosres := float32(math.Cos(float64(angle)))
@@ -876,4 +1022,20 @@ func QuaternionTransform(q *raylib.Quaternion, mat raylib.Matrix) {
 	q.Y = mat.M1*x + mat.M5*y + mat.M9*z + mat.M13*w
 	q.Z = mat.M2*x + mat.M6*y + mat.M10*z + mat.M14*w
 	q.W = mat.M3*x + mat.M7*y + mat.M11*z + mat.M15*w
+}
+
+// Clamp - Clamp float value
+func Clamp(value, min, max float32) float32 {
+	var res float32
+	if value < min {
+		res = min
+	} else {
+		res = value
+	}
+
+	if res > max {
+		return max
+	}
+
+	return res
 }

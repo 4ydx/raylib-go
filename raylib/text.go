@@ -7,89 +7,45 @@ package raylib
 import "C"
 import "unsafe"
 
-// CharInfo - SpriteFont character info
-type CharInfo struct {
-	// Character value (Unicode)
-	Value int32
-	// Character rectangle in sprite font
-	Rec Rectangle
-	// Character offset X when drawing
-	OffsetX int32
-	// Character offset Y when drawing
-	OffsetY int32
-	// Character advance position X
-	AdvanceX int32
-}
-
+// cptr returns C pointer
 func (c *CharInfo) cptr() *C.CharInfo {
 	return (*C.CharInfo)(unsafe.Pointer(c))
 }
 
-// NewCharInfo - Returns new SpriteFont
-func NewCharInfo(value int32, rec Rectangle, offsetX, offsetY, advanceX int32) CharInfo {
-	return CharInfo{value, rec, offsetX, offsetY, advanceX}
-}
-
-// NewCharInfoFromPointer - Returns new SpriteFont from pointer
-func NewCharInfoFromPointer(ptr unsafe.Pointer) CharInfo {
-	return *(*CharInfo)(ptr)
-}
-
-// SpriteFont type, includes texture and charSet array data
-type SpriteFont struct {
-	// Font texture
-	Texture Texture2D
-	// Base size (default chars height)
-	BaseSize int32
-	// Number of characters
-	CharsCount int32
-	// Characters info data
-	Chars *CharInfo
-}
-
+// cptr returns C pointer
 func (s *SpriteFont) cptr() *C.SpriteFont {
 	return (*C.SpriteFont)(unsafe.Pointer(s))
-}
-
-// NewSpriteFont - Returns new SpriteFont
-func NewSpriteFont(texture Texture2D, baseSize, charsCount int32, chars *CharInfo) SpriteFont {
-	return SpriteFont{texture, baseSize, charsCount, chars}
-}
-
-// NewSpriteFontFromPointer - Returns new SpriteFont from pointer
-func NewSpriteFontFromPointer(ptr unsafe.Pointer) SpriteFont {
-	return *(*SpriteFont)(ptr)
 }
 
 // GetDefaultFont - Get the default SpriteFont
 func GetDefaultFont() SpriteFont {
 	ret := C.GetDefaultFont()
-	v := NewSpriteFontFromPointer(unsafe.Pointer(&ret))
+	v := newSpriteFontFromPointer(unsafe.Pointer(&ret))
 	return v
 }
 
-// LoadSpriteFont - Load a SpriteFont image into GPU memory
+// LoadSpriteFont - Load a SpriteFont image into GPU memory (VRAM)
 func LoadSpriteFont(fileName string) SpriteFont {
 	cfileName := C.CString(fileName)
 	defer C.free(unsafe.Pointer(cfileName))
 	ret := C.LoadSpriteFont(cfileName)
-	v := NewSpriteFontFromPointer(unsafe.Pointer(&ret))
+	v := newSpriteFontFromPointer(unsafe.Pointer(&ret))
 	return v
 }
 
-// LoadSpriteFontTTF - Load a SpriteFont from TTF font with parameters
-func LoadSpriteFontTTF(fileName string, fontSize int32, charsCount int32, fontChars *int32) SpriteFont {
+// LoadSpriteFontEx - Load SpriteFont from file with extended parameters
+func LoadSpriteFontEx(fileName string, fontSize int32, charsCount int32, fontChars *int32) SpriteFont {
 	cfileName := C.CString(fileName)
 	defer C.free(unsafe.Pointer(cfileName))
 	cfontSize := (C.int)(fontSize)
 	ccharsCount := (C.int)(charsCount)
 	cfontChars := (*C.int)(unsafe.Pointer(fontChars))
-	ret := C.LoadSpriteFontTTF(cfileName, cfontSize, ccharsCount, cfontChars)
-	v := NewSpriteFontFromPointer(unsafe.Pointer(&ret))
+	ret := C.LoadSpriteFontEx(cfileName, cfontSize, ccharsCount, cfontChars)
+	v := newSpriteFontFromPointer(unsafe.Pointer(&ret))
 	return v
 }
 
-// UnloadSpriteFont - Unload SpriteFont from GPU memory
+// UnloadSpriteFont - Unload SpriteFont from GPU memory (VRAM)
 func UnloadSpriteFont(spriteFont SpriteFont) {
 	cspriteFont := spriteFont.cptr()
 	C.UnloadSpriteFont(*cspriteFont)
@@ -136,7 +92,7 @@ func MeasureTextEx(spriteFont SpriteFont, text string, fontSize float32, spacing
 	cfontSize := (C.float)(fontSize)
 	cspacing := (C.int)(spacing)
 	ret := C.MeasureTextEx(*cspriteFont, ctext, cfontSize, cspacing)
-	v := NewVector2FromPointer(unsafe.Pointer(&ret))
+	v := newVector2FromPointer(unsafe.Pointer(&ret))
 	return v
 }
 

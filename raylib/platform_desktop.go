@@ -21,14 +21,19 @@ func InitWindow(width int32, height int32, t interface{}) {
 	title, ok := t.(string)
 	if ok {
 		ctitle := C.CString(title)
-		defer C.free(unsafe.Pointer(ctitle))
-		C.InitWindow(cwidth, cheight, ctitle)
+		cptitle := unsafe.Pointer(ctitle)
+		defer C.free(cptitle)
+		C.InitWindow(cwidth, cheight, cptitle)
 	}
 }
 
 // SetCallbackFunc - Sets callback function
 func SetCallbackFunc(func(unsafe.Pointer)) {
 	return
+}
+
+// SetMainLoop - Sets main loop function
+func SetMainLoop(f func(), fps, simulateInfiniteLoop int) {
 }
 
 // ShowCursor - Shows cursor

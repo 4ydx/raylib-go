@@ -1,5 +1,10 @@
-![logo](https://goo.gl/jhpm6K)
-## raylib-go [![Build Status](https://travis-ci.org/gen2brain/raylib-go.svg?branch=master)](https://travis-ci.org/gen2brain/raylib-go) [![GoDoc](https://godoc.org/github.com/gen2brain/raylib-go/raylib?status.svg)](https://godoc.org/github.com/gen2brain/raylib-go/raylib) [![Go Report Card](https://goreportcard.com/badge/github.com/gen2brain/raylib-go)](https://goreportcard.com/report/github.com/gen2brain/raylib-go)
+![logo](https://goo.gl/XlIcXz)
+## raylib-go
+[![TravisCI Build Status](https://travis-ci.org/gen2brain/raylib-go.svg?branch=master)](https://travis-ci.org/gen2brain/raylib-go)
+[![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/qv2iggrqtgl7xhr0?svg=true)](https://ci.appveyor.com/project/gen2brain/raylib-go)
+[![GoDoc](https://godoc.org/github.com/gen2brain/raylib-go/raylib?status.svg)](https://godoc.org/github.com/gen2brain/raylib-go/raylib)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gen2brain/raylib-go)](https://goreportcard.com/report/github.com/gen2brain/raylib-go)
+[![Examples](https://img.shields.io/badge/learn%20by-examples-0077b3.svg?style=flat-square)](https://github.com/gen2brain/raylib-go/tree/master/examples)
 
 Golang bindings for [raylib](http://www.raylib.com/), a simple and easy-to-use library to learn videogames programming.
 
@@ -7,23 +12,24 @@ Golang bindings for [raylib](http://www.raylib.com/), a simple and easy-to-use l
 
 ### Requirements
 
-* [OpenAL Soft](http://kcat.strangesoft.net/openal.html)
+* [GLFW](http://www.glfw.org/) is included as part of the Go package, but you need to make sure you have dependencies installed, see below.
 
 ##### Ubuntu
 
-    apt-get install libopenal-dev libxi-dev libxinerama-dev libxcursor-dev libxxf86vm-dev
+    apt-get install libasound2-dev libgl1-mesa-dev libxi-dev libxinerama-dev libxcursor-dev libxxf86vm-dev libxrandr-dev
 
 ##### Fedora
 
-    dnf install openal-soft-devel mesa-libGL-devel libXi-devel libXcursor-devel libXrandr-devel libXinerama-devel
+    dnf install alsa-lib-devel mesa-libGL-devel libXi-devel libXcursor-devel libXrandr-devel libXinerama-devel
 
-##### OS X
+##### macOS
 
-On OS X system OpenAL framework is used.
+On macOS you need Xcode or Command Line Tools for Xcode.
 
-##### Windows ([MSYS2](https://msys2.github.io/))
+##### Windows
 
-    pacman -S mingw-w64-x86_64-openal mingw-w64-x86_64-gcc mingw-w64-x86_64-go git
+On Windows you need C compiler, like [Mingw-w64](https://mingw-w64.org) or [TDM-GCC](http://tdm-gcc.tdragon.net/).
+You can also build binary in [MSYS2](https://msys2.github.io/) shell.
 
 ##### Android
 
@@ -35,7 +41,18 @@ On OS X system OpenAL framework is used.
 
 ### Installation
 
-    go get -v github.com/gen2brain/raylib-go/raylib
+    go get -v -u github.com/gen2brain/raylib-go/raylib
+
+### Build tags
+
+* `noaudio` - disables audio functions
+* `opengl21` - uses OpenGL 2.1 backend (default is 3.3 on desktop)
+* `opengl11` - uses OpenGL 1.1 backend (pseudo OpenGL 1.1 style)
+* `wayland` - builds against Wayland libraries
+
+### Documentation
+
+Documentation on [GoDoc](https://godoc.org/github.com/gen2brain/raylib-go/raylib). Also check raylib [cheatsheet](http://www.raylib.com/cheatsheet/cheatsheet.html).
 
 ### Example
 

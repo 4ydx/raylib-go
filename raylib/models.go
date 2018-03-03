@@ -6,128 +6,25 @@ package raylib
 */
 import "C"
 import "unsafe"
-import "reflect"
 
-// Mesh - Vertex data definning a mesh
-type Mesh struct {
-	// Number of vertices stored in arrays
-	VertexCount int32
-	// Number of triangles stored (indexed or not)
-	TriangleCount int32
-	// Vertex position (XYZ - 3 components per vertex) (shader-location = 0)
-	Vertices *[]float32
-	// Vertex texture coordinates (UV - 2 components per vertex) (shader-location = 1)
-	Texcoords *[]float32
-	// Vertex second texture coordinates (useful for lightmaps) (shader-location = 5)
-	Texcoords2 *[]float32
-	// Vertex normals (XYZ - 3 components per vertex) (shader-location = 2)
-	Normals *[]float32
-	// Vertex tangents (XYZ - 3 components per vertex) (shader-location = 4)
-	Tangents *[]float32
-	// Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
-	Colors *[]uint8
-	// Vertex indices (in case vertex data comes indexed)
-	Indices *[]uint16
-	// OpenGL Vertex Array Object id
-	VaoID uint32
-	// OpenGL Vertex Buffer Objects id (7 types of vertex data)
-	VboID [7]uint32
-}
-
+// cptr returns C pointer
 func (m *Mesh) cptr() *C.Mesh {
 	return (*C.Mesh)(unsafe.Pointer(m))
 }
 
-// NewMesh - Returns new Mesh
-func NewMesh(vertexCount, triangleCount int32, vertices, texcoords, texcoords2, normals, tangents *[]float32, colors *[]uint8, indices *[]uint16, vaoID uint32, vboID [7]uint32) Mesh {
-	return Mesh{vertexCount, triangleCount, vertices, texcoords, texcoords2, normals, tangents, colors, indices, vaoID, vboID}
-}
-
-// NewMeshFromPointer - Returns new Mesh from pointer
-func NewMeshFromPointer(ptr unsafe.Pointer) Mesh {
-	return *(*Mesh)(ptr)
-}
-
-// Material type
-type Material struct {
-	// Standard shader (supports 3 map textures)
-	Shader Shader
-	// Diffuse texture  (binded to shader mapTexture0Loc)
-	TexDiffuse Texture2D
-	// Normal texture   (binded to shader mapTexture1Loc)
-	TexNormal Texture2D
-	// Specular texture (binded to shader mapTexture2Loc)
-	TexSpecular Texture2D
-	// Diffuse color
-	ColDiffuse Color
-	// Ambient color
-	ColAmbient Color
-	// Specular color
-	ColSpecular Color
-	// Glossiness level (Ranges from 0 to 1000)
-	Glossiness float32
-}
-
+// cptr returns C pointer
 func (m *Material) cptr() *C.Material {
 	return (*C.Material)(unsafe.Pointer(m))
 }
 
-// NewMaterial - Returns new Material
-func NewMaterial(shader Shader, texDiffuse, texNormal, texSpecular Texture2D, colDiffuse, colAmbient, colSpecular Color, glossiness float32) Material {
-	return Material{shader, texDiffuse, texNormal, texSpecular, colDiffuse, colAmbient, colSpecular, glossiness}
-}
-
-// NewMaterialFromPointer - Returns new Material from pointer
-func NewMaterialFromPointer(ptr unsafe.Pointer) Material {
-	return *(*Material)(ptr)
-}
-
-// Model type
-type Model struct {
-	// Vertex data buffers (RAM and VRAM)
-	Mesh Mesh
-	// Local transform matrix
-	Transform Matrix
-	// Shader and textures data
-	Material Material
-	// Padding
-	_ [4]byte
-}
-
+// cptr returns C pointer
 func (m *Model) cptr() *C.Model {
 	return (*C.Model)(unsafe.Pointer(m))
 }
 
-// NewModel - Returns new Model
-func NewModel(mesh Mesh, transform Matrix, material Material) Model {
-	return Model{mesh, transform, material, [4]byte{}}
-}
-
-// NewModelFromPointer - Returns new Model from pointer
-func NewModelFromPointer(ptr unsafe.Pointer) Model {
-	return *(*Model)(ptr)
-}
-
-// Ray type (useful for raycast)
-type Ray struct {
-	// Ray position (origin)
-	Position Vector3
-	// Ray direction
-	Direction Vector3
-}
-
+// cptr returns C pointer
 func (r *Ray) cptr() *C.Ray {
 	return (*C.Ray)(unsafe.Pointer(r))
-}
-
-// NewRay - Returns new Ray
-func NewRay(position, direction Vector3) Ray {
-	return Ray{position, direction}
-}
-
-// NewRayFromPointer - Returns new Ray from pointer
-func NewRayFromPointer(ptr unsafe.Pointer) Ray {
-	return *(*Ray)(ptr)
 }
 
 // DrawLine3D - Draw a line in 3D world space
@@ -270,19 +167,7 @@ func LoadMesh(fileName string) Mesh {
 	cfileName := C.CString(fileName)
 	defer C.free(unsafe.Pointer(cfileName))
 	ret := C.LoadMesh(cfileName)
-	v := NewMeshFromPointer(unsafe.Pointer(&ret))
-	return v
-}
-
-// LoadMeshEx - Load mesh from vertex data
-func LoadMeshEx(numVertex int32, vData []float32, vtData []float32, vnData []float32, cData []Color) Mesh {
-	cnumVertex := (C.int)(numVertex)
-	cvData := (*C.float)(unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(&vData)).Data))
-	cvtData := (*C.float)(unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(&vtData)).Data))
-	cvnData := (*C.float)(unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(&vnData)).Data))
-	ccData := (*C.Color)(unsafe.Pointer((*reflect.SliceHeader)(unsafe.Pointer(&cData)).Data))
-	ret := C.LoadMeshEx(cnumVertex, cvData, cvtData, cvnData, ccData)
-	v := NewMeshFromPointer(unsafe.Pointer(&ret))
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
 	return v
 }
 
@@ -291,43 +176,16 @@ func LoadModel(fileName string) Model {
 	cfileName := C.CString(fileName)
 	defer C.free(unsafe.Pointer(cfileName))
 	ret := C.LoadModel(cfileName)
-	v := NewModelFromPointer(unsafe.Pointer(&ret))
+	v := newModelFromPointer(unsafe.Pointer(&ret))
 	return v
 }
 
 // LoadModelFromMesh - Load model from mesh data
-func LoadModelFromMesh(data Mesh, dynamic bool) Model {
+func LoadModelFromMesh(data Mesh) Model {
 	cdata := data.cptr()
-	cdynamic := 0
-	if dynamic {
-		cdynamic = 1
-	}
-	ret := C.LoadModelFromMesh(*cdata, C.bool(cdynamic))
-	v := NewModelFromPointer(unsafe.Pointer(&ret))
+	ret := C.LoadModelFromMesh(*cdata)
+	v := newModelFromPointer(unsafe.Pointer(&ret))
 	return v
-}
-
-// LoadHeightmap - Load heightmap model from image data
-func LoadHeightmap(heightmap *Image, size Vector3) Model {
-	cheightmap := heightmap.cptr()
-	csize := size.cptr()
-	ret := C.LoadHeightmap(*cheightmap, *csize)
-	v := NewModelFromPointer(unsafe.Pointer(&ret))
-	return v
-}
-
-// LoadCubicmap - Load cubes-based map model from image data
-func LoadCubicmap(cubicmap *Image) Model {
-	ccubicmap := cubicmap.cptr()
-	ret := C.LoadCubicmap(*ccubicmap)
-	v := NewModelFromPointer(unsafe.Pointer(&ret))
-	return v
-}
-
-// UnloadMesh - Unload mesh from memory (RAM and/or VRAM)
-func UnloadMesh(mesh *Mesh) {
-	cmesh := mesh.cptr()
-	C.UnloadMesh(cmesh)
 }
 
 // UnloadModel - Unload model from memory (RAM and/or VRAM)
@@ -336,19 +194,125 @@ func UnloadModel(model Model) {
 	C.UnloadModel(*cmodel)
 }
 
+// UnloadMesh - Unload mesh from memory (RAM and/or VRAM)
+func UnloadMesh(mesh *Mesh) {
+	cmesh := mesh.cptr()
+	C.UnloadMesh(cmesh)
+}
+
+// GenMeshPlane - Generate plane mesh (with subdivisions)
+func GenMeshPlane(width, length float32, resX, resZ int) Mesh {
+	cwidth := (C.float)(width)
+	clength := (C.float)(length)
+	cresX := (C.int)(resX)
+	cresZ := (C.int)(resZ)
+
+	ret := C.GenMeshPlane(cwidth, clength, cresX, cresZ)
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
+	return v
+}
+
+// GenMeshCube - Generate cuboid mesh
+func GenMeshCube(width, height, length float32) Mesh {
+	cwidth := (C.float)(width)
+	cheight := (C.float)(height)
+	clength := (C.float)(length)
+
+	ret := C.GenMeshCube(cwidth, cheight, clength)
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
+	return v
+}
+
+// GenMeshSphere - Generate sphere mesh (standard sphere)
+func GenMeshSphere(radius float32, rings, slices int) Mesh {
+	cradius := (C.float)(radius)
+	crings := (C.int)(rings)
+	cslices := (C.int)(slices)
+
+	ret := C.GenMeshSphere(cradius, crings, cslices)
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
+	return v
+}
+
+// GenMeshHemiSphere - Generate half-sphere mesh (no bottom cap)
+func GenMeshHemiSphere(radius float32, rings, slices int) Mesh {
+	cradius := (C.float)(radius)
+	crings := (C.int)(rings)
+	cslices := (C.int)(slices)
+
+	ret := C.GenMeshHemiSphere(cradius, crings, cslices)
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
+	return v
+}
+
+// GenMeshCylinder - Generate cylinder mesh
+func GenMeshCylinder(radius, height float32, slices int) Mesh {
+	cradius := (C.float)(radius)
+	cheight := (C.float)(height)
+	cslices := (C.int)(slices)
+
+	ret := C.GenMeshCylinder(cradius, cheight, cslices)
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
+	return v
+}
+
+// GenMeshTorus - Generate torus mesh
+func GenMeshTorus(radius, size float32, radSeg, sides int) Mesh {
+	cradius := (C.float)(radius)
+	csize := (C.float)(size)
+	cradSeg := (C.int)(radSeg)
+	csides := (C.int)(sides)
+
+	ret := C.GenMeshTorus(cradius, csize, cradSeg, csides)
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
+	return v
+}
+
+// GenMeshKnot - Generate trefoil knot mesh
+func GenMeshKnot(radius, size float32, radSeg, sides int) Mesh {
+	cradius := (C.float)(radius)
+	csize := (C.float)(size)
+	cradSeg := (C.int)(radSeg)
+	csides := (C.int)(sides)
+
+	ret := C.GenMeshKnot(cradius, csize, cradSeg, csides)
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
+	return v
+}
+
+// GenMeshHeightmap - Generate heightmap mesh from image data
+func GenMeshHeightmap(heightmap Image, size Vector3) Mesh {
+	cheightmap := heightmap.cptr()
+	csize := size.cptr()
+
+	ret := C.GenMeshHeightmap(*cheightmap, *csize)
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
+	return v
+}
+
+// GenMeshCubicmap - Generate cubes-based map mesh from image data
+func GenMeshCubicmap(cubicmap Image, size Vector3) Mesh {
+	ccubicmap := cubicmap.cptr()
+	csize := size.cptr()
+
+	ret := C.GenMeshCubicmap(*ccubicmap, *csize)
+	v := newMeshFromPointer(unsafe.Pointer(&ret))
+	return v
+}
+
 // LoadMaterial - Load material data (.MTL)
 func LoadMaterial(fileName string) Material {
 	cfileName := C.CString(fileName)
 	defer C.free(unsafe.Pointer(cfileName))
 	ret := C.LoadMaterial(cfileName)
-	v := NewMaterialFromPointer(unsafe.Pointer(&ret))
+	v := newMaterialFromPointer(unsafe.Pointer(&ret))
 	return v
 }
 
-// LoadDefaultMaterial - Load default material (uses default models shader)
-func LoadDefaultMaterial() Material {
-	ret := C.LoadDefaultMaterial()
-	v := NewMaterialFromPointer(unsafe.Pointer(&ret))
+// LoadMaterialDefault - Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
+func LoadMaterialDefault() Material {
+	ret := C.LoadMaterialDefault()
+	v := newMaterialFromPointer(unsafe.Pointer(&ret))
 	return v
 }
 
@@ -430,7 +394,7 @@ func DrawBillboardRec(camera Camera, texture Texture2D, sourceRec Rectangle, cen
 func CalculateBoundingBox(mesh Mesh) BoundingBox {
 	cmesh := mesh.cptr()
 	ret := C.CalculateBoundingBox(*cmesh)
-	v := NewBoundingBoxFromPointer(unsafe.Pointer(&ret))
+	v := newBoundingBoxFromPointer(unsafe.Pointer(&ret))
 	return v
 }
 
